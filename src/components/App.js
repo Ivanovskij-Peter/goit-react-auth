@@ -1,56 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import db from './firebase/config';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import db from '../firebase/config';
+import { uploadProfileActoin } from '../redux/actions';
+import { useRoute } from '../router';
+
 function App() {
-  const [users, setUsers] = useState([]);
-  const getCurrentUser = async () => {
-    await db
-      .firestore()
-      .collection('notes')
-      .onSnapshot(doc => {
-        const data = doc.docs.map(elem => ({
-          ...elem.data(),
-          id: elem.id,
-        }));
-        setUsers(data);
-      });
-    // const transformData = data.docs.map(elem => ({
-    //   ...elem.data(),
-    //   id: elem.id,
-    // }));
-    // console.log('transformData', transformData);
-  };
-  const putCurrentUser = async () => {
-    const data = await db.firestore().collection('notes').add({
-      name: 'Jhone',
-    });
-
-    // const transformData = data.docs.map(elem => ({
-    //   ...elem.data(),
-    //   id: elem.id,
-    // }));
-    // console.log('transformData', transformData);
-  };
-  const deleteUser = id => {
-    db.firestore().collection('notes').doc(id).delete();
-  };
-
-  useEffect(() => {
-    getCurrentUser();
-  }, []);
-
-  return (
-    <>
-      <button onClick={putCurrentUser}>add new User</button>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>
-            <h2>{user.name}</h2>
-            <button onClick={() => deleteUser(user.id)}>delete</button>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
+  const [user, setUser] = useState(null);
+  const dispatch = useDispatch();
+  db.auth().onAuthStateChanged(user => {
+    setUser(user);
+    if (user) {
+      const profile = {
+        displayName: user.displayName,
+        uid: user.uid,
+        email: user.email,
+      };
+      dispatch(uploadProfileActoin(profile));
+    }
+  });
+  console.log(user);
+  const routing = useRoute(user);
+  return <> {routing}</>;
 }
 
 export default App;
